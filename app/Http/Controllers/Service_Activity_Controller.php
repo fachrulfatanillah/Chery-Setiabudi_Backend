@@ -14,6 +14,7 @@ class Service_Activity_Controller extends Controller
 
     /**
      * Display a listing of the resource.
+     * 
      * @return JsonResponse
      */
     public function index(): JsonResponse
@@ -95,6 +96,43 @@ class Service_Activity_Controller extends Controller
                 'status'  => 201,
                 'data'    => $data
             ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 500,
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param string $uuid
+     * @return JsonResponse
+     */
+    public function destroy(string $uuid): JsonResponse
+    {
+        try {
+            $activity = Service_Activity::where('uuid', $uuid)->firstOrFail();
+
+            $imagePath = storage_path('app/public/' . $activity->image_url);
+
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+
+            $activity->delete();
+
+            return response()->json([
+                'success' => true,
+                'status'  => 200,
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 404,
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
