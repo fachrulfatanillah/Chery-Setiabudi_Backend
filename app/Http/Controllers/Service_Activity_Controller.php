@@ -16,7 +16,6 @@ class Service_Activity_Controller extends Controller
      * Display a listing of the resource.
      * @return JsonResponse
      */
-
     public function index(): JsonResponse
     {
         try {
@@ -49,25 +48,54 @@ class Service_Activity_Controller extends Controller
         ]);
 
         try {
-            $imagePath = $request->file('image')->store('service_activities', 'public');
+            $file = $request->file('image');
 
-            $activity = new Service_Activity([
+            $filename = pathinfo($file->hashName(), PATHINFO_FILENAME) . '.webp';
+
+            $tempPath = $file->store('temp', 'public');
+            $fullTempPath = storage_path('app/public/' . $tempPath);
+
+            $destination = storage_path('app/public/service_activities/' . $filename);
+
+            $mime = $file->getMimeType();
+            switch ($mime) {
+                case 'image/jpeg':
+                    $image = imagecreatefromjpeg($fullTempPath);
+                    break;
+                case 'image/png':
+                    $image = imagecreatefrompng($fullTempPath);
+                    imagepalettetotruecolor($image);
+                    break;
+                default:
+                    throw new \Exception('Only PNG, JPG, and JPEG image formats are supported.');
+            }
+
+            imagewebp($image, $destination, 100);
+            imagedestroy($image);
+
+            if (file_exists($fullTempPath)) {
+                unlink($fullTempPath);
+            }
+
+            $webpRelativePath = 'service_activities/' . $filename;
+
+            $data = new Service_Activity([
                 'uuid'        => Str::uuid()->toString(),
-                'image_url'   => $imagePath,
+                'image_url'   => $webpRelativePath,
                 'image_title' => $validated['image_title'],
                 'status'      => 1,
                 'create_on'   => now(),
                 'update_on'   => now(),
             ]);
 
-            $activity->save();
+            $data->save();
 
             return response()->json([
                 'success' => true,
                 'status'  => 201,
-                'data'    => $activity
+                'data'    => $data
             ], 201);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'status'  => 500,
