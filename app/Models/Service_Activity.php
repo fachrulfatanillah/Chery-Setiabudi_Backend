@@ -19,6 +19,7 @@ class Service_Activity extends Model
      * @var string
      */
     protected $primaryKey = 'id';
+    protected $hidden = ['id'];
 
     /**
      * Indicates if the IDs are auto-incrementing.
