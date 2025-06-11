@@ -141,4 +141,105 @@ class Service_Activity_Controller extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $uuid
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, string $uuid): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'image_title' => 'sometimes|required|string|max:255',
+                'status'      => 'sometimes|required|in:0,1',
+            ]);
+
+            $activity = Service_Activity::where('uuid', $uuid)->firstOrFail();
+
+            if ($request->has('image_title')) {
+                $activity->image_title = $request->input('image_title');
+            }
+
+            if ($request->has('status')) {
+                $activity->status = $request->input('status') === '1' ? true : false;
+            }
+
+            $activity->update_on = now();
+            $activity->save();
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'data' => $activity,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function updateImage(Request $request, string $uuid): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            ]);
+
+            $activity = Service_Activity::where('uuid', $uuid)->firstOrFail();
+
+            $file = $request->file('image');
+            $filename = pathinfo($file->hashName(), PATHINFO_FILENAME) . '.webp';
+
+            $tempPath = $file->store('temp', 'public');
+            $fullTempPath = storage_path('app/public/' . $tempPath);
+            $destination = storage_path('app/public/service_activities/' . $filename);
+
+            $mime = $file->getMimeType();
+            switch ($mime) {
+                case 'image/jpeg':
+                    $image = imagecreatefromjpeg($fullTempPath);
+                    break;
+                case 'image/png':
+                    $image = imagecreatefrompng($fullTempPath);
+                    imagepalettetotruecolor($image);
+                    break;
+                default:
+                    throw new \Exception('Only PNG, JPG, and JPEG formats are supported.');
+            }
+
+            imagewebp($image, $destination, 100);
+            imagedestroy($image);
+
+            if (file_exists($fullTempPath)) {
+                unlink($fullTempPath);
+            }
+
+            $oldPath = storage_path('app/public/' . $activity->image_url);
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
+
+            $activity->image_url = 'service_activities/' . $filename;
+            $activity->update_on = now();
+            $activity->save();
+
+            return response()->json([
+                'success' => true,
+                'status' => 200,
+                'data' => $activity,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 500,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

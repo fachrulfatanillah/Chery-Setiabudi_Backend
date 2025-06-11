@@ -10,3 +10,4 @@ Route::prefix('/')->group(function () {
 });
 
 Route::apiResource('service-activities', Service_Activity_Controller::class);
+Route::post('/service-activities/{uuid}/image', [Service_Activity_Controller::class, 'updateImage']);
