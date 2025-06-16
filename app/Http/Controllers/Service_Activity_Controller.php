@@ -20,7 +20,9 @@ class Service_Activity_Controller extends Controller
     public function index(): JsonResponse
     {
         try {
-            $activities = Service_Activity::all();
+            // $activities = Service_Activity::all();
+            $activities = Service_Activity::select('uuid', 'image_url', 'image_title', 'status', 'create_on', 'update_on')->get();
+            // $activities = Service_Activity::paginate(1);
 
             return response()->json([
                 'success' => true,
