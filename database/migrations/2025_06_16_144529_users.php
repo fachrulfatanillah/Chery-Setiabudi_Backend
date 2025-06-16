@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->string('username', 50);
             $table->string('email', 50)->unique();
-            $table->string('password', 50);
+            $table->string('password', 255);
             $table->dateTime('create_on');
             $table->dateTime('update_on');
         });

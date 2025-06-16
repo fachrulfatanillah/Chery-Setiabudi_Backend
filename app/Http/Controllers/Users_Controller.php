@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Users;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Exception;
 
 class Users_Controller extends Controller
@@ -66,6 +67,51 @@ class Users_Controller extends Controller
             return response()->json([
                 'success' => false,
                 'status' => 500,
+            ], 500);
+        }
+    }
+
+    /**
+     * Store a newly created user in storage.
+     *
+     * Validates the incoming request, creates a new user with a UUID,
+     * hashes the password, and saves the data to the database.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function store(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'username' => 'required|string|max:255',
+                'email'    => 'required|email|unique:users,email',
+                'password' => 'required|string|min:6',
+            ]);
+
+            $user = new Users();
+            $user->uuid       = Str::uuid();
+            $user->username   = $request->input('username');
+            $user->email      = $request->input('email');
+            $user->password   = Hash::make($request->input('password'));
+            $user->create_on  = now();
+            $user->update_on  = now();
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'status'  => 201,
+                'data'    => [
+                    'uuid'     => $user->uuid,
+                    'username' => $user->username,
+                    'email'    => $user->email,
+                ],
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 500,
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
