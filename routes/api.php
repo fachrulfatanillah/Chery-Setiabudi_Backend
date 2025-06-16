@@ -11,6 +11,7 @@ Route::prefix('/')->group(function () {
 });
 
 Route::apiResource('users', Users_Controller::class);
+Route::post('/auth-user', [Users_Controller::class, 'show']);
 
 Route::apiResource('service-activities', Service_Activity_Controller::class);
 Route::post('/service-activities/{uuid}/image', [Service_Activity_Controller::class, 'updateImage']);
