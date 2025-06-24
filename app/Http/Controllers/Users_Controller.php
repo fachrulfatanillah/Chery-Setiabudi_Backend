@@ -45,13 +45,13 @@ class Users_Controller extends Controller
     {
         try {
             $request->validate([
-                'email' => 'required|email',
+                'email'    => 'required|email',
                 'password' => 'required|string',
             ]);
 
             $user = Users::where('email', $request->email)->first();
 
-            $isValid = $user && $user->password === $request->password;
+            $isValid = $user && Hash::check($request->password, $user->password);
 
             return response()->json([
                 'success' => true,
@@ -63,10 +63,11 @@ class Users_Controller extends Controller
                     'uuid'     => $user->uuid,
                 ] : null,
             ], 200);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'status' => 500,
+                'status'  => 500,
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
