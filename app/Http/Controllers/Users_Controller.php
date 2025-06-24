@@ -116,4 +116,36 @@ class Users_Controller extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Remove the specified user from storage based on UUID.
+     *
+     * @param  string  $uuid
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy(string $uuid): JsonResponse
+    {
+        try {
+            $user = Users::where('uuid', $uuid)->firstOrFail();
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'status'  => 200,
+                'message' => 'User deleted successfully.',
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 404,
+                'error'   => 'User not found.',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status'  => 500,
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
